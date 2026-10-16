@@ -39,7 +39,7 @@ def synthesize_texture(
     output_size=(256, 256),
     window_size=11,
     tol_factor=1.1,
-    random_seed=None
+    random_seed=42
 ):
     if window_size < 3 or window_size % 2 == 0:
         raise ValueError("window_size must be an odd integer >= 3")
