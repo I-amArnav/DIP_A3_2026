@@ -3,6 +3,14 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
+import zipfile
+
+zip_path = "../data/faces/ATT_Faces_Dataset.zip"
+extract_path = "../data/faces/ATT_Faces"
+if not os.path.exists(extract_path):
+    with zipfile.ZipFile(zip_path, "r") as z:
+        z.extractall(extract_path)
+
 def load_att_dataset(dataset_path="../data/faces/ATT_Faces/ATT_Faces_Dataset", img_shape=(112, 92)):
     images = []
     labels = []
@@ -103,4 +111,3 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig("output/principal_modes.png", bbox_inches='tight')
     plt.close()
-    print("Part A outputs saved successfully to output/")

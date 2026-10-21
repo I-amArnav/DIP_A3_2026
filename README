@@ -10,7 +10,7 @@ Keep unzipped folders q1, q2, q3, q4 and data in the same directory for the code
 
 ## Q4: PCA-Based Face Recognition
 
-**Final configuration:** The search selected \(K=25\), face-space threshold `5339.416504`, and identity threshold `1646.676794`, achieving 92.50% accuracy (148/160 test images).
+**Final configuration:** The search selected \(K=25\), face-space threshold `5339.416504`, and identity threshold `1646.676794`, achieving 92.50% accuracy (148/160 test images). Values also reported by printing to terminal.
 
 ## Outputs
 
