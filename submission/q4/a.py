@@ -89,12 +89,14 @@ if __name__ == "__main__":
     plt.savefig("output/mean_image.png", bbox_inches='tight')
     plt.close()
     
-    alpha = 50.0
+    alpha = 2.0
     fig, axes = plt.subplots(10, 3, figsize=(9, 25))
     for i in range(10):
         ef = eigenfaces[:, i].reshape(img_h, img_w)
-        mean_plus = (mean_image + alpha * eigenfaces[:, i]).reshape(img_h, img_w)
-        mean_minus = (mean_image - alpha * eigenfaces[:, i]).reshape(img_h, img_w)
+        std_dev = np.sqrt(evals[i])
+
+        mean_plus = (mean_image + alpha * std_dev * eigenfaces[:, i]).reshape(img_h, img_w)
+        mean_minus = (mean_image - alpha * std_dev * eigenfaces[:, i]).reshape(img_h, img_w)
         
         axes[i, 0].imshow(ef, cmap='gray')
         axes[i, 0].set_title(f"Eigenface {i+1}")
