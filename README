@@ -2,7 +2,8 @@
 
 ## Instructions
 
-Keep unzipped folders q1, q2, q3, q4 and data in the same directory for the codes to run.
+Run "zip -s0 part.zip --out submission.zip" and "unzip submission.zip" on terminal to extract the codes and outputs.
+Keep folders q1, q2, q3, q4 and data in the same directory for the codes to run.
 
 ## Q1
 
