@@ -16,21 +16,15 @@ def reconstruction_errors(images, mean_image, eigenfaces):
     return np.linalg.norm(residuals, axis=1)
 
 
-def nearest_training_matches(images, train_images, train_labels,
-                             mean_image, eigenfaces):
+def nearest_training_matches(images, train_images, train_labels, mean_image, eigenfaces):
 
     train_weights = project_images(train_images, mean_image, eigenfaces)
     query_weights = project_images(images, mean_image, eigenfaces)
 
-    distances = np.linalg.norm(
-        query_weights[:, None, :] - train_weights[None, :, :],
-        axis=2
-    )
+    distances = np.linalg.norm(query_weights[:, None, :] - train_weights[None, :, :], axis=2)
     nearest_indices = np.argmin(distances, axis=1)
     nearest_distances = distances[np.arange(len(images)), nearest_indices]
-    nearest_subjects = np.array(
-        [train_labels[i][0] for i in nearest_indices], dtype=int
-    )
+    nearest_subjects = np.array([train_labels[i][0] for i in nearest_indices], dtype=int)
     return nearest_subjects, nearest_distances
 
 
@@ -38,18 +32,14 @@ def classify_images(images, train_images, train_labels, mean_image,
                     eigenfaces, face_threshold, identity_threshold):
 
     errors = reconstruction_errors(images, mean_image, eigenfaces)
-    nearest_subjects, nearest_distances = nearest_training_matches(
-        images, train_images, train_labels, mean_image, eigenfaces
-    )
+    nearest_subjects, nearest_distances = nearest_training_matches(images, train_images, train_labels, mean_image, eigenfaces)
 
     decisions = np.zeros(len(images), dtype=int)
     decisions[errors > face_threshold] = -1
 
     is_face_like = errors <= face_threshold
     is_known_identity = nearest_distances <= identity_threshold
-    decisions[is_face_like & is_known_identity] = nearest_subjects[
-        is_face_like & is_known_identity
-    ]
+    decisions[is_face_like & is_known_identity] = nearest_subjects[is_face_like & is_known_identity]
     decisions[is_face_like & ~is_known_identity] = 0
 
     return decisions, errors, nearest_distances
@@ -57,10 +47,7 @@ def classify_images(images, train_images, train_labels, mean_image,
 
 def make_ground_truth(labels):
 
-    return np.array(
-        [subject if subject <= 30 else 0 for subject, image_id in labels],
-        dtype=int
-    )
+    return np.array([subject if subject <= 30 else 0 for subject, image_id in labels], dtype=int)
 
 
 def make_matrix(values, labels, n_subjects=40, n_images=10, fill_value=np.nan):
@@ -93,7 +80,7 @@ if __name__ == "__main__":
     if len(train_images) != 240:
         raise RuntimeError(
             f"Expected 240 training images, but loaded {len(train_images)}. "
-            "Check dataset extraction, paths, and filenames."
+            f"Check dataset extraction, paths, and filenames."
         )
     if len(test_images) == 0:
         raise RuntimeError("The test set is empty.")
@@ -101,32 +88,21 @@ if __name__ == "__main__":
     test_truth = make_ground_truth(test_labels)
 
     max_k = min(100, len(train_images) - 1, images.shape[1])
-    mean_image, eigenfaces_all, eigenvalues = compute_pca(
-        train_images, num_components=max_k
-    )
+    mean_image, eigenfaces_all, eigenvalues = compute_pca(train_images, num_components=max_k)
 
-    k_candidates = [k for k in (5, 10, 15, 20, 25, 30, 40, 50)
-                    if k <= max_k]
+    k_candidates = [k for k in (5, 10, 15, 20, 25, 30, 40, 50) if k <= max_k]
     best = None
 
     for k in k_candidates:
         eigenfaces = eigenfaces_all[:, :k]
 
-        face_errors = reconstruction_errors(
-            test_images, mean_image, eigenfaces
-        )
-        _, nearest_distances = nearest_training_matches(
-            test_images, train_images, train_labels, mean_image, eigenfaces
-        )
+        face_errors = reconstruction_errors(test_images, mean_image, eigenfaces)
+        _, nearest_distances = nearest_training_matches(test_images, train_images, train_labels, mean_image, eigenfaces)
 
-        face_candidates = np.unique(np.quantile(
-            face_errors, [0.0, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50,
-                          0.60, 0.70, 0.80, 0.90, 0.95, 1.0]
-        ))
+        face_candidates = np.unique(np.quantile(face_errors, [0.0, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.0]))
         identity_candidates = np.unique(np.quantile(
             nearest_distances, [0.0, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50,
-                                 0.60, 0.70, 0.80, 0.90, 0.95, 1.0]
-        ))
+                                 0.60, 0.70, 0.80, 0.90, 0.95, 1.0]))
 
         for face_threshold in face_candidates:
             for identity_threshold in identity_candidates:
@@ -160,9 +136,7 @@ if __name__ == "__main__":
     all_face_errors = reconstruction_errors(images, mean_image, eigenfaces)
     M1 = make_matrix(all_face_errors, labels)
 
-    all_nearest_subjects, _ = nearest_training_matches(
-        images, train_images, train_labels, mean_image, eigenfaces
-    )
+    all_nearest_subjects, _ = nearest_training_matches(images, train_images, train_labels, mean_image, eigenfaces)
     M2 = make_matrix(all_nearest_subjects, labels)
 
     all_decisions, _, _ = classify_images(
@@ -209,6 +183,3 @@ if __name__ == "__main__":
     plt.savefig("output/matrices_jet_visualization.png",
                 bbox_inches="tight", dpi=300)
     plt.close()
-
-    print("Saved M1, M2, M3, parameters, test predictions, and visualization "
-          "to output/.")

@@ -1,0 +1,4 @@
+K=25
+face_threshold=5339.41650390625
+identity_threshold=1646.6767944335938
+test_accuracy_percent=92.5

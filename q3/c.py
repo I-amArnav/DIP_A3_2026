@@ -23,26 +23,12 @@ def calculate_distances(image, cand_y, cand_x, target, known, weights):
             for dx in range(win):
                 if known[dy, dx]:
                     for c in range(channels):
-                        diff = (
-                            image[cy + dy - pad, cx + dx - pad, c]
-                            - target[dy, dx, c]
-                        )
+                        diff = (image[cy + dy - pad, cx + dx - pad, c] - target[dy, dx, c])
                         total += weights[dy, dx] * diff * diff
-
         distances[i] = total
-
     return distances
 
-
-def inpainting(
-    image,
-    mask,
-    window_size=9,
-    tol_factor=1.1,
-    candidate_stride=3,
-    max_candidates=2500,
-    random_seed=42
-):
+def inpainting(image, mask, window_size=9, tol_factor=1.1, candidate_stride=3, max_candidates=2500, random_seed=42):
 
     if image is None or mask is None:
         raise ValueError("Image and mask must not be None")
@@ -90,10 +76,7 @@ def inpainting(
         xs = np.arange(pad, w - pad, stride)
 
         if len(ys) == 0 or len(xs) == 0:
-            return (
-                np.array([], dtype=np.int32),
-                np.array([], dtype=np.int32)
-            )
+            return (np.array([], dtype=np.int32), np.array([], dtype=np.int32))
 
         yy, xx = np.meshgrid(ys, xs, indexing="ij")
 
@@ -130,10 +113,7 @@ def inpainting(
     counter = 0
 
     def neighbor_count(y, x):
-        return int(np.sum(
-            known[max(0, y-1):min(h, y+2),
-                  max(0, x-1):min(w, x+2)]
-        ))
+        return int(np.sum(known[max(0, y-1):min(h, y+2), max(0, x-1):min(w, x+2)]))
 
     def add_to_heap(y, x):
         nonlocal counter
@@ -147,10 +127,7 @@ def inpainting(
 
         versions[y, x] += 1
 
-        heapq.heappush(
-            heap,
-            (-count, counter, y, x, versions[y, x])
-        )
+        heapq.heappush(heap, (-count, counter, y, x, versions[y, x]))
         counter += 1
 
     counts = cv2.filter2D(
@@ -186,9 +163,7 @@ def inpainting(
         wy1, wy2 = pad-(y-y1), pad+(y2-y)
         wx1, wx2 = pad-(x-x1), pad+(x2-x)
 
-        target = np.zeros(
-            (window_size, window_size, channels), dtype=np.float32
-        )
+        target = np.zeros((window_size, window_size, channels), dtype=np.float32)
         target_known = np.zeros((window_size, window_size), dtype=bool)
 
         target[wy1:wy2, wx1:wx2] = output[y1:y2, x1:x2]
@@ -202,14 +177,10 @@ def inpainting(
 
         weights /= total_weight
 
-        distances = calculate_distances(
-            img, cand_y, cand_x, target, target_known, weights
-        )
+        distances = calculate_distances(img, cand_y, cand_x, target, target_known, weights)
 
         best = float(distances.min())
-        matches = np.flatnonzero(
-            distances <= tol_factor * max(best, 1e-5)
-        )
+        matches = np.flatnonzero(distances <= tol_factor * max(best, 1e-5))
 
         idx = int(rng.choice(matches))
         sy, sx = int(cand_y[idx]), int(cand_x[idx])
@@ -231,17 +202,11 @@ def inpainting(
                 for dx in (-1, 0, 1):
                     ny, nx = ty + dy, tx + dx
 
-                    if (
-                        0 <= ny < h
-                        and 0 <= nx < w
-                        and not known[ny, nx]
-                    ):
+                    if (0 <= ny < h and 0 <= nx < w and not known[ny, nx]):
                         add_to_heap(ny, nx)
 
     if not known.all():
-        raise RuntimeError(
-            "Some pixels remain unfilled. Try a smaller window_size."
-        )
+        raise RuntimeError("Some pixels remain unfilled. Try a smaller window_size.")
 
     result = np.clip(output * 255.0, 0, 255).astype(np.uint8)
 

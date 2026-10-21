@@ -34,13 +34,8 @@ def calculate_distances(sample_patches, target, known, weights):
     return distances
 
 
-def synthesize_texture(
-    sample_img,
-    output_size=(256, 256),
-    window_size=11,
-    tol_factor=1.1,
-    random_seed=42
-):
+def synthesize_texture(sample_img, output_size=(256, 256), window_size=11, tol_factor=1.1, random_seed=42):
+
     if window_size < 3 or window_size % 2 == 0:
         raise ValueError("window_size must be an odd integer >= 3")
 
@@ -69,9 +64,7 @@ def synthesize_texture(
 
     rng = np.random.default_rng(random_seed)
 
-    output = np.zeros(
-        (h_out, w_out, channels), dtype=np.float32
-    )
+    output = np.zeros((h_out, w_out, channels), dtype=np.float32)
     mask = np.zeros((h_out, w_out), dtype=bool)
 
     start_y = (h_out - h_s) // 2
@@ -83,15 +76,11 @@ def synthesize_texture(
     sigma = window_size / 6.4
     gaussian = get_gaussian_weights(window_size, sigma)
 
-    patches = sliding_window_view(
-        sample_img, (window_size, window_size), axis=(0, 1)
-    )
+    patches = sliding_window_view(sample_img, (window_size, window_size), axis=(0, 1))
 
     patches = patches.transpose(0, 1, 3, 4, 2)
 
-    sample_patches = np.ascontiguousarray(
-        patches.reshape(-1, window_size, window_size, channels)
-    )
+    sample_patches = np.ascontiguousarray(patches.reshape(-1, window_size, window_size, channels))
 
     heap = []
     versions = np.zeros((h_out, w_out), dtype=np.int32)
@@ -116,10 +105,7 @@ def synthesize_texture(
 
         versions[y, x] += 1
 
-        heapq.heappush(
-            heap,
-            (-count, counter, y, x, versions[y, x])
-        )
+        heapq.heappush(heap, (-count, counter, y, x, versions[y, x]))
         counter += 1
 
     boundary = cv2.filter2D(
@@ -152,9 +138,7 @@ def synthesize_texture(
         x1 = max(0, x - pad)
         x2 = min(w_out, x + pad + 1)
 
-        target = np.zeros(
-            (window_size, window_size, channels), dtype=np.float32
-        )
+        target = np.zeros((window_size, window_size, channels), dtype=np.float32)
         known = np.zeros((window_size, window_size), dtype=bool)
 
         wy1 = pad - (y - y1)
@@ -168,15 +152,11 @@ def synthesize_texture(
         weights = gaussian * known
         weights /= weights.sum()
 
-        distances = calculate_distances(
-            sample_patches, target, known, weights
-        )
+        distances = calculate_distances(sample_patches, target, known, weights)
 
         min_dist = float(distances.min())
 
-        valid = np.flatnonzero(
-            distances <= tol_factor * max(min_dist, 1e-5)
-        )
+        valid = np.flatnonzero(distances <= tol_factor * max(min_dist, 1e-5))
 
         chosen = rng.choice(valid)
 
@@ -190,11 +170,7 @@ def synthesize_texture(
             for dx in (-1, 0, 1):
                 ny, nx = y + dy, x + dx
 
-                if (
-                    0 <= ny < h_out
-                    and 0 <= nx < w_out
-                    and not mask[ny, nx]
-                ):
+                if (0 <= ny < h_out and 0 <= nx < w_out and not mask[ny, nx]):
                     add_to_heap(ny, nx)
 
     if not mask.all():
